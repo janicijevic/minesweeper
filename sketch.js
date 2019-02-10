@@ -123,12 +123,16 @@ function touchEnded(){
 
 }
 
+function mousePressed(){
+    framesWhenTouched = frameCount;
+}
+
 function mouseReleased(){
-    if(touched) return;
     if(alive){
         if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height) return;
         x = floor(mouseX/tileW);
         y = floor(mouseY/tileH);
+        
         if(!generated){
             xClicked = x;
             yClicked = y;
@@ -137,6 +141,11 @@ function mouseReleased(){
         }
 
         if(mouseButton == LEFT){
+            if(frameCount - framesWhenTouched > 15){
+                field[x][y].isFlagged = true;
+                return;
+            }
+
             open(x, y);
             if(field[x][y].num == -1){
                 gameOver();
