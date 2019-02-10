@@ -9,7 +9,6 @@ let xClicked = 0;
 let yClicked = 0;
 let opened = 0;
 let flagged = 0;
-let touched = false;
 let framesWhenTouched = 0;
 
 let colors = {
