@@ -2,7 +2,7 @@ let tileW, tileH;
 let fieldW = 16;
 let fieldH = 16;
 let field = [];
-let mines = 1;
+let mines = 40;
 let alive = true;
 let generated = false;
 let xClicked = 0;
