@@ -10,6 +10,11 @@ let yClicked = 0;
 let opened = 0;
 let flagged = 0;
 let framesWhenTouched = 0;
+let isTouch =  x = 'touchstart' in document.documentElement;
+let won = false;
+let bottom = 60;
+let elapsedTime = 0;
+let timeStarted = 0
 
 let colors = {
     1: [0, 0, 255],
@@ -40,10 +45,10 @@ document.addEventListener('contextmenu', event => event.preventDefault());
 
 
 function setup(){
-    createCanvas(400, 400);
+    createCanvas(400, 400+bottom);
 
     tileW = width/fieldW;
-    tileH = height/fieldH;
+    tileH = (height-bottom)/fieldH;
     
     
     textSize(tileH*2/3);
@@ -70,18 +75,23 @@ function draw(){
         for(let i = 0; i < fieldW; i++){
             for(let j = 0; j<fieldH; j++){
                 let n = field[i][j].num;
+                //Back
                 fill(200);
                 if(field[i][j].isRight ) fill(0, 255, 0);
                 rect(i*tileW, j*tileH, tileW, tileH);
+                
                 if(n > 0) {
+                    //Number
                     fill(colors[n][0], colors[n][1], colors[n][2]);
                     text(field[i][j].num, i*tileW+tileW/3, j*tileH+textSize());
                 }
                 else if(n == -1){
+                    //Bomb
                     fill(0);
                     ellipse(i*tileW+tileW/2, j*tileH+tileH/2, tileW*2/3, tileH*2/3);
                 }
 
+                //Cover
                 if(!field[i][j].isOpen){
                     fill(250);
                     if(field[i][j].isWrong) fill(255, 0, 0);
@@ -95,11 +105,38 @@ function draw(){
             }
         }
     }
-    if(opened >= fieldW*fieldH - mines){
+    if(flagged == mines){
+        won = true;
+        for(let i = 0; i<fieldW; i++){
+            for(let j = 0; j<fieldH; j++){
+                if(field[i][j].isFlagged){
+                    if(field[i][j].num != -1) won = false;
+                }
+            }
+        }
+    }
+    if(opened >= fieldW*fieldH - mines || won){
         gameOver();
         fill(0);
         text("Win", 10, 50);
     }
+
+    
+    elapsedTime = round(((new Date()).getTime() - timeStarted)/1000);
+    if(timeStarted == 0) elapsedTime = 0;
+    //Draw bottom
+    fill(250);
+    strokeWeight(2);
+    rect(0, height-bottom, width, bottom);
+    strokeWeight(1);
+
+    rect(tileW, tileH+height-bottom, tileW*2, tileH);
+    fill(0);
+    text(mines-flagged, tileW+textSize(), tileH+height-bottom+textSize());
+    fill(250);
+    rect(width-tileW*3, tileH+height-bottom, tileW*2, tileH);
+    fill(0);
+    text(elapsedTime, width-tileW*3+textSize(), tileH+height-bottom+textSize());
 
 }
 
@@ -109,7 +146,7 @@ function mousePressed(){
 
 function mouseReleased(){
     if(alive){
-        if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height) return;
+        if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height-bottom) return;
         x = floor(mouseX/tileW);
         y = floor(mouseY/tileH);
         
@@ -118,21 +155,27 @@ function mouseReleased(){
             yClicked = y;
             generateField();
             generated = true;
+            timeStarted = (new Date()).getTime();
         }
-
         if(mouseButton == LEFT){
-            if(frameCount - framesWhenTouched > 15){
-                field[x][y].isFlagged = true;
-                return;
+            //Left
+            if(isTouch){
+                if(frameCount - framesWhenTouched > 15){
+                    field[x][y].isFlagged = true;
+                    flagged++;
+                    return;
+                }
             }
-
-            open(x, y);
-            if(field[x][y].num == -1){
-                gameOver();
-                return;
+            if(!field[x][y].isFlagged){
+                open(x, y);
+                if(field[x][y].num == -1){
+                    gameOver();
+                    return;
+                }
             }
         }
         else if(mouseButton == RIGHT){
+            //Right
             field[x][y].isFlagged ? flagged-- : flagged++;
             field[x][y].isFlagged = !field[x][y].isFlagged;
         }
@@ -189,7 +232,7 @@ function generateField(){
         minesLeft--;
     }
      
-    //now were gonna expand the array
+    //Expanding the array by one because of edge cases
     let tmp = [];
 
     for(let i = 0; i<fieldW+2; i++){
@@ -223,27 +266,7 @@ function generateField(){
             field[i][j].num = tmp[i+1][j+1].num;
         }
     }
-    //for debug
-    // tileW = tileH = 50;
-    // for(let i = 0; i < fieldW+2; i++){
-    //     for(let j = 0; j<fieldH+2; j++){
-    //         fill(200);
-    //         fill(tmp[i][j].num*255/9+100);
-    //         if(tmp[i][j].num == -1) fill(255);
-    //         rect(i*tileW, j*tileH, tileW, tileH);
-    //         fill(tmp[i][j].num*255/9);
-    //         text(tmp[i][j].num, i*tileW+tileW/3, j*tileH+textSize()*3/2);
-    //         if(!tmp[i][j].isOpen){
-    //             fill(250);
-    //             rect(i*tileW, j*tileH, tileW, tileH);
-    //         }
-
-    //     }
-    // }
-
 }
-
-
 
 class Tile{
     constructor(num){
