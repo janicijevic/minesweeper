@@ -103,25 +103,6 @@ function draw(){
 
 }
 
-function touchStarted(){
-    touched = true;
-    framesWhenTouched = frameCount;
-}
-
-function touchEnded(){
-    if(alive){
-        touched = false;
-        if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height) return;
-        x = floor(mouseX/tileW);
-        y = floor(mouseY/tileH);
-        if(frameCount - framesWhenTouched > 100){
-            field[x][y].isFlagged = true;
-        }
-        else mouseReleased();
-    }
-
-}
-
 function mousePressed(){
     framesWhenTouched = frameCount;
 }
