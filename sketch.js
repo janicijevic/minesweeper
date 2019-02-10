@@ -2,12 +2,15 @@ let tileW, tileH;
 let fieldW = 16;
 let fieldH = 16;
 let field = [];
-let mines = 40;
+let mines = 1;
 let alive = true;
 let generated = false;
 let xClicked = 0;
 let yClicked = 0;
-
+let opened = 0;
+let flagged = 0;
+let touched = false;
+let framesWhenTouched = 0;
 
 let colors = {
     1: [0, 0, 255],
@@ -93,11 +96,35 @@ function draw(){
             }
         }
     }
+    if(opened >= fieldW*fieldH - mines){
+        gameOver();
+        fill(0);
+        text("Win", 10, 50);
+    }
 
 }
 
+function touchStarted(){
+    touched = true;
+    framesWhenTouched = frameCount;
+}
+
+function touchEnded(){
+    if(alive){
+        touched = false;
+        if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height) return;
+        x = floor(mouseX/tileW);
+        y = floor(mouseY/tileH);
+        if(frameCount - framesWhenTouched > 100){
+            field[x][y].isFlagged = true;
+        }
+        else mouseReleased();
+    }
+
+}
 
 function mouseReleased(){
+    if(touched) return;
     if(alive){
         if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height) return;
         x = floor(mouseX/tileW);
@@ -117,6 +144,7 @@ function mouseReleased(){
             }
         }
         else if(mouseButton == RIGHT){
+            field[x][y].isFlagged ? flagged-- : flagged++;
             field[x][y].isFlagged = !field[x][y].isFlagged;
         }
     }   
@@ -126,6 +154,7 @@ function open(x, y){
     if(x<0 || y<0 || x>field.length-1 || y>field[0].length-1) return;
     if(field[x][y].isOpen) return;
     field[x][y].isOpen = true;
+    opened++;
     if(field[x][y].num != 0) return;
     
 
