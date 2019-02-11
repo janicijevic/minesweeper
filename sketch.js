@@ -10,7 +10,7 @@ let yClicked = 0;
 let opened = 0;
 let flagged = 0;
 let framesWhenTouched = 0;
-let isTouch =  x = 'touchstart' in document.documentElement;
+let isTouch = true;
 let won = false;
 let bottom = 60;
 let elapsedTime = 0;
