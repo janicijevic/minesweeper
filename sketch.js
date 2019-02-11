@@ -10,7 +10,7 @@ let yClicked = 0;
 let opened = 0;
 let flagged = 0;
 let framesWhenTouched = 0;
-let isTouch = true;
+let isTouch =  true;
 let won = false;
 let bottom = 60;
 let elapsedTime = 0;
@@ -28,10 +28,6 @@ let colors = {
 }
 
 /*
-
-
-
-
 
 8x8_10 
 
@@ -161,8 +157,8 @@ function mouseReleased(){
             //Left
             if(isTouch){
                 if(frameCount - framesWhenTouched > 15){
-                    field[x][y].isFlagged = true;
-                    flagged++;
+                    field[x][y].isFlagged ? flagged-- : flagged++;
+                    field[x][y].isFlagged = !field[x][y].isFlagged;
                     return;
                 }
             }
