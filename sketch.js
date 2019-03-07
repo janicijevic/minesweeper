@@ -175,6 +175,13 @@ function mouseReleased(){
             field[x][y].isFlagged ? flagged-- : flagged++;
             field[x][y].isFlagged = !field[x][y].isFlagged;
         }
+        else if(mouseButton == CENTER){
+            for(let i = -1; i<=1; i++){
+                for(let j = -1; j<=1; j++){
+                    open(i, j);
+                }
+            }
+        }
     }   
 }
 
