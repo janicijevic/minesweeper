@@ -1,20 +1,8 @@
 let tileW, tileH;
-let fieldW = 16;
-let fieldH = 16;
-let field = [];
-let mines = 40;
-let alive = true;
-let generated = false;
-let xClicked = 0;
-let yClicked = 0;
-let opened = 0;
-let flagged = 0;
 let framesWhenTouched = 0;
 let isTouch =  true;
-let won = false;
 let bottom = 60;
-let elapsedTime = 0;
-let timeStarted = 0
+let fieldW, fieldH, field, mines, alive, generated, xClicked, yClicked, opened, flagged, elapsedTime, timeStarted, sizeChosen, won, boxW, boxH;
 
 let colors = {
     1: [0, 0, 255],
@@ -39,66 +27,87 @@ let colors = {
 //Disable right click
 document.addEventListener('contextmenu', event => event.preventDefault());
 
+function reset(){
+    field = [];
+    alive = true;
+    generated = false;
+    xClicked = 0;
+    yClicked = 0;
+    opened = 0;
+    flagged = 0;
+    elapsedTime = 0;
+    timeStarted = 0
+    sizeChosen = false;
+    won = false;
+}
 
 function setup(){
     createCanvas(400, 400+bottom);
-
-    tileW = width/fieldW;
-    tileH = (height-bottom)/fieldH;
-    
-    
-    textSize(tileH*2/3);
+    boxW = width/16;
+    boxH = (height-bottom)/16;
+    textSize(boxH*2/3);
     textFont("Georgia");
-
-    
-    //setup the field
-    for(let i = 0; i < fieldW; i++){
-        let t = [];
-        for(let j = 0; j<fieldH; j++){
-            t.push(new Tile(0));
-        }
-        field.push(t);
-    }
-
+    reset()
 
 }
 
 function draw(){
     background(0);
 
-    if(true){
-        //Show field
-        for(let i = 0; i < fieldW; i++){
-            for(let j = 0; j<fieldH; j++){
-                let n = field[i][j].num;
-                //Back
-                fill(200);
-                if(field[i][j].isRight ) fill(0, 255, 0);
-                rect(i*tileW, j*tileH, tileW, tileH);
-                
-                if(n > 0) {
-                    //Number
-                    fill(colors[n][0], colors[n][1], colors[n][2]);
-                    text(field[i][j].num, i*tileW+tileW/3, j*tileH+textSize());
-                }
-                else if(n == -1){
-                    //Bomb
-                    fill(0);
-                    ellipse(i*tileW+tileW/2, j*tileH+tileH/2, tileW*2/3, tileH*2/3);
-                }
+    if(!sizeChosen){
+        fill(160, 255, 158);
+        rect(0, 0, width, height/3);
+        fill(0);
+        text("8x8, 10 bombs", width/2 - 3*textSize(), height/6-textSize()/2);
 
-                //Cover
-                if(!field[i][j].isOpen){
-                    fill(250);
-                    if(field[i][j].isWrong) fill(255, 0, 0);
-                    rect(i*tileW, j*tileH, tileW, tileH);
-                    if(field[i][j].isFlagged){
-                        fill(255, 0, 0);
-                        text("F", i*tileW+tileW/3, j*tileH+textSize());
-                    }
-                }
+        fill(255, 245, 158);
+        rect(0, height/3, width, height/3);
+        fill(0);
+        text("16x16, 40 bombs", width/2 - 3.5*textSize(), height*2/3-height/6-textSize()/2);
+        fill(255, 179, 179);
+        rect(0, height*2/3, width, height/3);
+        fill(0);
+        text("20x20, 99 bombs", width/2 - 3.5*textSize(), height-height/6-textSize()/2);
 
+        noFill();
+        stroke(0);
+        rect(0, 0, width-1, height-1);
+        return;
+    }
+    
+
+    //Show field
+    for(let i = 0; i < fieldW; i++){
+        for(let j = 0; j<fieldH; j++){
+            let n = field[i][j].num;
+            //Back
+            fill(200);
+            if(field[i][j].isRight ) fill(0, 255, 0);
+            rect(i*tileW, j*tileH, tileW, tileH);
+            
+            if(n > 0) {
+                //Number
+                fill(colors[n][0], colors[n][1], colors[n][2]);
+                text(field[i][j].num, i*tileW+tileW/3, j*tileH+tileH*2/3);
             }
+            else if(n == -1){
+                //Bomb
+                fill(0);
+                ellipse(i*tileW+tileW/2, j*tileH+tileH/2, tileW*2/3, tileH*2/3);
+            }
+
+            //Cover
+            if(!field[i][j].isOpen){
+                fill(250);
+                if(field[i][j].isWrong) fill(255, 0, 0);
+                rect(i*tileW, j*tileH, tileW, tileH);
+                if(field[i][j].isFlagged){
+                    // fill(255, 0, 0);
+                    // text("F", i*tileW+tileW/3, j*tileH+tileH*2/3);
+                    drawFlag(i*tileW, j*tileH, tileW, tileH);
+                }
+            }
+
         }
     }
     if(flagged == mines){
@@ -117,8 +126,9 @@ function draw(){
         text("Win", 10, 50);
     }
 
-    
-    elapsedTime = round(((new Date()).getTime() - timeStarted)/1000);
+    if(alive){
+        elapsedTime = round(((new Date()).getTime() - timeStarted)/1000);
+    }
     if(timeStarted == 0) elapsedTime = 0;
     //Draw bottom
     fill(250);
@@ -126,73 +136,159 @@ function draw(){
     rect(0, height-bottom, width, bottom);
     strokeWeight(1);
 
-    rect(tileW, tileH+height-bottom, tileW*2, tileH);
+    rect(boxW, boxH+height-bottom, boxW*2, boxH);
     fill(0);
-    text(mines-flagged, tileW+textSize(), tileH+height-bottom+textSize());
+    text(mines-flagged, boxW+textSize(), boxH+height-bottom+textSize());
     fill(250);
-    rect(width-tileW*3, tileH+height-bottom, tileW*2, tileH);
+    rect(width-boxW*3, boxH+height-bottom, boxW*2, boxH);
     fill(0);
-    text(elapsedTime, width-tileW*3+textSize(), tileH+height-bottom+textSize());
+    text(elapsedTime, width-boxW*3+textSize(), boxH+height-bottom+textSize());
+    if(!alive){
+        fill(250);
+        rect(width/2-boxW, boxH+height-bottom, boxW*2, boxH);
+        fill(0);
+        text("Reset", width/2-boxW*3/2+textSize(), boxH+height-bottom+textSize());
+    }
+    noFill();
+    stroke(0);
+    rect(0, 0, width-1, height-1);
+}
 
+function drawFlag(x, y, w, h){
+    fill(74, 74, 74);
+    noStroke();
+    rect(x+w/10, y+h*9/10, w-w*2/10, h/10);
+    rect(x+w/2-w/10, y, w/10, h);
+    fill(184, 0, 0);
+    triangle(x+w/2, y, x+w, y+h/4, x+w/2, y+h/2);
+
+    stroke(0);
 }
 
 function mousePressed(){
-    framesWhenTouched = frameCount;
+        framesWhenTouched = frameCount;
 }
 
 function mouseReleased(){
-    if(alive){
-        if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height-bottom) return;
-        x = floor(mouseX/tileW);
-        y = floor(mouseY/tileH);
+    if(!sizeChosen){
+        if(mouseY<height/3){
+            fieldW = 8;
+            fieldH = 8;
+            mines = 10;
+        }
+        else if(mouseY<height*2/3){
+            fieldW = 16;
+            fieldH = 16;
+            mines = 40;
+        }
+        else if(mouseY<height){
+            fieldW = 20;
+            fieldH = 20;
+            mines = 99;
+        }
+        sizeChosen = true;
+        tileW = width/fieldW;
+        tileH = (height-bottom)/fieldH;
         
-        if(!generated){
-            xClicked = x;
-            yClicked = y;
-            generateField();
-            generated = true;
-            timeStarted = (new Date()).getTime();
+        
+        //setup the field
+        for(let i = 0; i < fieldW; i++){
+            let t = [];
+            for(let j = 0; j<fieldH; j++){
+                t.push(new Tile(0));
+            }
+            field.push(t);
         }
-        if(mouseButton == LEFT){
-            //Left
-            if(isTouch){
-                if(frameCount - framesWhenTouched > 15){
-                    field[x][y].isFlagged ? flagged-- : flagged++;
-                    field[x][y].isFlagged = !field[x][y].isFlagged;
-                    return;
+    
+    }
+    else{
+        if(alive){
+            if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height-bottom) return;
+            x = floor(mouseX/tileW);
+            y = floor(mouseY/tileH);
+            
+            if(!generated){
+                xClicked = x;
+                yClicked = y;
+                generateField();
+                generated = true;
+                timeStarted = (new Date()).getTime();
+            }
+            if(mouseButton == LEFT){
+                //Left
+                if(isTouch){
+                    if(frameCount - framesWhenTouched > 15){
+                        field[x][y].isFlagged ? flagged-- : flagged++;
+                        field[x][y].isFlagged = !field[x][y].isFlagged;
+                        return;
+                    }
+                }
+                if(!field[x][y].isFlagged){
+                    open(x, y);
+                    if(field[x][y].num == -1){
+                        gameOver();
+                        return;
+                    }
                 }
             }
-            if(!field[x][y].isFlagged){
-                open(x, y);
-                if(field[x][y].num == -1){
-                    gameOver();
-                    return;
+            else if(mouseButton == RIGHT){
+                //Right
+                field[x][y].isFlagged ? flagged-- : flagged++;
+                field[x][y].isFlagged = !field[x][y].isFlagged;
+            }
+            else if(mouseButton == CENTER && field[x][y].isOpen){
+                let count = 0;
+                for(let i = -1; i<=1; i++){
+                    for(let j = -1; j<=1; j++){
+                        if(x+i < 0 || x+i >= fieldW || y+j < 0 || y+j >= fieldH) continue;
+                        if(field[x+i][y+j].isFlagged) count++;
+                    }
+                }
+                console.log(field[x][y].num);
+                if(count == field[x][y].num){
+                    for(let i = -1; i<=1; i++){
+                        for(let j = -1; j<=1; j++){
+                            openAround(x+i, y+j);
+                        }
+                    }
                 }
             }
-        }
-        else if(mouseButton == RIGHT){
-            //Right
-            field[x][y].isFlagged ? flagged-- : flagged++;
-            field[x][y].isFlagged = !field[x][y].isFlagged;
-        }
-        else if(mouseButton == CENTER){
-            for(let i = -1; i<=1; i++){
-                for(let j = -1; j<=1; j++){
-                    open(i, j);
-                }
+        }   
+        else{
+            if(mouseX > width/2-boxW && mouseY > boxH+height-bottom && mouseX < width/2-boxW+boxW*2 && mouseY < boxH+height-bottom+boxH){
+                reset();
             }
         }
-    }   
+    }
+}
+function openAround(x,y){
+    if(x<0 || y<0 || x>field.length-1 || y>field[0].length-1) return;
+    if(field[x][y].isOpen) return;
+    if(!field[x][y].isFlagged){
+        field[x][y].isOpen = true;
+        opened++;
+        if(field[x][y].num == -1) {
+            console.log('bruh')
+            gameOver();
+             for(let dx = -1; dx<=1; dx++){
+                 for(let dy = -1; dy<=1; dy++){
+                     if(dx == 0 && dy==0) continue;
+                     open(x+dx, y+dy);
+                 }
+             }
+        }
+    }
 }
 
 function open(x, y){
     if(x<0 || y<0 || x>field.length-1 || y>field[0].length-1) return;
     if(field[x][y].isOpen) return;
-    field[x][y].isOpen = true;
-    opened++;
+    if(!field[x][y].isFlagged){
+        field[x][y].isOpen = true;
+        opened++;
+    }
     if(field[x][y].num != 0) return;
     
-
     for(let dx = -1; dx<=1; dx++){
         for(let dy = -1; dy<=1; dy++){
             if(dx == 0 && dy==0) continue;
@@ -202,7 +298,7 @@ function open(x, y){
 }
 
 function gameOver(){
-    noLoop();
+    alive = false;
     for(let i = 0; i<fieldW; i++){
         for(let j = 0; j<fieldH; j++){
             let t = field[i][j];
@@ -281,4 +377,3 @@ class Tile{
     }
 
 }
-
