@@ -26,6 +26,9 @@ let colors = {
 
 //Disable right click
 document.addEventListener('contextmenu', event => event.preventDefault());
+function touchEnded(e){
+    e.preventDefault();
+}
 
 function reset(){
     field = [];
